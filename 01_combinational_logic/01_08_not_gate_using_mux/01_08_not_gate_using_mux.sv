@@ -28,4 +28,6 @@ module not_gate_using_mux
   // constants 0 and 1, and wire connections
 
 
+  mux mux1 (.d0('b1),.d1('b0),.sel(i),.y(o));
+
 endmodule

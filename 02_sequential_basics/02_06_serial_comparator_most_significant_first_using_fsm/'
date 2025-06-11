@@ -91,14 +91,19 @@ module serial_comparator_most_significant_first_using_fsm
     // verilator lint_off CASEINCOMPLETE
 
     case (state)
-      st_equal       : if (a_less_b) new_state = st_a_less_b;
-                  else if (a_greater_b) new_state = st_a_greater_b;
-      st_a_less_b    : if (a_greater_b) new_state = st_a_greater_b;
-      st_a_greater_b : if (a_less_b) new_state = st_a_less_b;
+      st_equal       : if (~ a &   b) new_state = st_a_less_b;
+                  else if (  a & ~ b) new_state = st_a_greater_b;
+      st_a_less_b    : if (  a & ~ b) new_state = st_a_greater_b;
+      st_a_greater_b : if (~ a &   b) new_state = st_a_less_b;
     endcase
 
     // verilator lint_on  CASEINCOMPLETE
   end
+
+  // Output logic
+  assign a_eq_b      = (a == b) & (state == st_equal);
+  assign a_less_b    = (~ a &   b) | (a == b & state == st_a_less_b);
+  assign a_greater_b = (  a & ~ b) | (a == b & state == st_a_greater_b);
 
   always_ff @ (posedge clk)
     if (rst)
@@ -106,8 +111,26 @@ module serial_comparator_most_significant_first_using_fsm
     else
       state <= new_state;
 
-// Output logic
-  assign a_eq_b      = (a == b) & (state == st_equal);
-  assign a_less_b    = ((~ a &   b) & (state == st_equal)) | (state == st_a_less_b);
-  assign a_greater_b = ((  a & ~ b) & (state == st_equal)) | (state == st_a_greater_b);
+
+always_ff @ (posedge clk)
+    if (rst)
+    begin
+      prev_a_eq_b   <= '1;
+      prev_a_less_b <= '0;
+      prev_a_greater_b <= '0;
+    end
+    else
+    begin
+      prev_a_eq_b   <= a_eq_b;
+      prev_a_less_b <= a_less_b;
+      prev_a_greater_b <= a_greater_b;
+    end
+
+// prev_:stores history
+// without prev_: history + current comparison
+  logic prev_a_eq_b, prev_a_less_b, prev_a_greater_b;
+
+  assign a_eq_b      = prev_a_eq_b & (a == b);
+  assign a_less_b    = (prev_a_eq_b & (~ a & b)) | (prev_a_less_b);
+  assign a_greater_b = (prev_a_eq_b & (a&~b)) | (prev_a_greater_b);
 endmodule

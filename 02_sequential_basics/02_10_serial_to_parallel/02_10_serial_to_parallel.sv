@@ -25,6 +25,30 @@ module serial_to_parallel
     //
     // Note:
     // Check the waveform diagram in the README for better understanding.
+localparam decimal_value = (1<<width);
+logic [width-1:0] parallel_storage;
+logic [width-1:0] counter;
 
+  assign parallel_data = (parallel_valid == 1)? parallel_storage: 0;
 
+  always_ff @(posedge clk or posedge rst) begin 
+    if(rst) begin
+      counter<= 0;
+      parallel_valid <= 0;
+      parallel_storage <= 0;
+    end
+    else if (serial_valid) begin
+      parallel_storage <= {serial_data,parallel_storage[width-1:1]};
+      if (counter == width-1) begin
+        counter <= 0;
+        parallel_valid <=1; 
+      end
+      else begin
+        counter <= counter+1;
+        parallel_valid <=0;
+      end
+    end
+    else if (counter == 0)
+      parallel_valid <=0;
+  end
 endmodule

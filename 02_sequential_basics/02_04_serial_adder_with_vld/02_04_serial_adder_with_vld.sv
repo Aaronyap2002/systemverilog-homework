@@ -6,13 +6,35 @@ module serial_adder_with_vld
 (
   input  clk,
   input  rst,
-  input  vld,
-  input  a,
-  input  b,
-  input  last,
-  output sum
+  input  logic vld,
+  input  logic a,
+  input  logic b,
+  input  logic last,
+  output logic sum
 );
 
+logic a_1,b_1,temp;
+//assign a_1 = a;
+//assign b_1 = b;
+
+  always_comb begin
+    if (vld) begin
+      temp = a_1 + b_1;
+    end
+  end
+
+  always_ff@(posedge clk) 
+    begin
+      if (rst)begin
+	a_1<=0;
+        b_1<=0;
+      end
+      else if (last)
+        sum <=temp;
+        a_1<=0;
+        b_1<=0;
+	temp<=0;
+    end
   // Task:
   // Implement a module that performs serial addition of two numbers
   // (one pair of bits is summed per clock cycle).

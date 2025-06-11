@@ -6,8 +6,8 @@ module double_tokens
 (
     input        clk,
     input        rst,
-    input        a,
-    output       b,
+    input logic       a,
+    output logic       b,
     output logic overflow
 );
     // Task:
@@ -24,6 +24,27 @@ module double_tokens
     // Example:
     // a -> 10010011000110100001100100
     // b -> 11011011110111111001111110
+logic [10:0] storage, of_counter;
 
-
+assign b = a|(storage > 0);
+always_ff@(posedge clk) begin
+   if (rst) begin
+      storage <= 0;
+      of_counter <= 0;
+      overflow <= 0;
+    end
+    else begin
+      if (a) begin
+        if(of_counter <= 200)
+          of_counter <= of_counter+1;
+	else if (!overflow)
+	  overflow <= 1;
+	storage <= storage +1;
+      end
+      else if (storage >0)
+        storage <= storage-1;
+      else
+        storage <=0;
+    end
+end
 endmodule

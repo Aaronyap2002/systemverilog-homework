@@ -75,5 +75,52 @@ module serial_divisibility_by_5_using_fsm
   // Hint 2: As we are interested only in the remainder, all operations are performed under the modulo 5 (% 5).
   // Check manually how the remainder changes under such modulo.
 
+  // States
+  enum logic[2:0]
+  {
+     mod_0 = 3'b000,
+     mod_1 = 3'b001,
+     mod_2 = 3'b010,
+     mod_3 = 3'b011,
+     mod_4 = 3'b100
+  }
+  state, new_state;
+
+  // State transition logic
+  always_comb
+  begin
+    new_state = state;
+  //odd number multiplied by 2 is always even
+  //when new bit is shifted in from the right to left, it adds one. So 2N+1
+  //module 5 : divided by 5 or 0 only
+    // This lint warning is bogus because we assign the default value above
+    // verilator lint_off CASEINCOMPLETE
+
+    case (state)
+      mod_0 : if(new_bit) new_state = mod_1;
+              else        new_state = mod_0;
+      mod_1 : if(new_bit) new_state = mod_3;//11
+              else        new_state = mod_2;//10
+      mod_2 : if(new_bit) new_state = mod_0;//101
+              else        new_state = mod_4;//100
+      mod_3 : if(new_bit) new_state = mod_2;//111
+              else        new_state = mod_1;//110
+      mod_4 : if(new_bit) new_state = mod_4;//1001
+              else        new_state = mod_3;//1000   
+    endcase
+
+    // verilator lint_on CASEINCOMPLETE
+
+  end
+
+  // Output logic
+  assign div_by_5 = state == mod_0;
+
+  // State update
+  always_ff @ (posedge clk)
+    if (rst)
+      state <= mod_0;
+    else
+      state <= new_state;
 
 endmodule
